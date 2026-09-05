@@ -1,16 +1,23 @@
 export default async function handler(req, res) {
-    // Hanya izinkan metode POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { projectName, htmlContent } = req.body;
+    const { adminCode, projectName, htmlContent } = req.body;
+
+    // --- KODE ADMIN RAHASIA (Tersimpan aman di backend) ---
+    const VALID_ADMIN_CODE = process.env.ADMIN_CODE || "FZGPT19";
+
+    // 1. VERIFIKASI KODE ADMIN DENGAN SERVER
+    if (!adminCode || adminCode !== VALID_ADMIN_CODE) {
+        return res.status(401).json({ error: 'Kode Admin Salah atau Tidak Valid!' });
+    }
 
     if (!projectName || !htmlContent) {
         return res.status(400).json({ error: 'Data project name atau HTML tidak lengkap' });
     }
 
-    // MENGAMBIL TOKEN DARI ENVIRONMENT VARIABLE VERCEL (SANGAT AMAN)
+    // --- VERCEL TOKEN DARI ENVIRONMENT VARIABLE ---
     const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 
     if (!VERCEL_TOKEN) {
