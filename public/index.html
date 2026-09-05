@@ -65,6 +65,45 @@
             margin-bottom: 15px;
         }
 
+        /* --- VIDEO INTRO STYLING --- */
+        .video-container {
+            position: relative;
+            width: 100%;
+            border: var(--border);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .video-container video {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .video-sound-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-yellow);
+            border: 2px solid #000;
+            padding: 5px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px #000;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-transform: uppercase;
+            z-index: 10;
+        }
+        .video-sound-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
         h1, h2 {
             text-transform: uppercase;
             margin-bottom: 15px;
@@ -149,7 +188,6 @@
             transform: translate(3px, 3px);
         }
 
-        /* Styling khusus tombol WhatsApp WA Admin */
         .btn-wa {
             background: var(--bg-whatsapp);
             margin-top: 15px;
@@ -237,43 +275,21 @@
 
     <div class="container">
         
-        <!-- ================= HALAMAN LOGIN ================= -->
-        <div id="loginPage" class="card">
-            <div class="badge">Akses Terbatas</div>
-            <h1><i data-lucide="lock"></i> Login Admin</h1>
-            <p>Masukkan Kode Akses Admin untuk menggunakan layanan Web Deployer.</p>
-
-            <div id="loginAlert" class="alert alert-error">
-                <i data-lucide="alert-triangle" style="width:16px; height:16px; vertical-align:middle;"></i>
-                <span id="loginAlertMsg">Kode admin salah!</span>
-            </div>
-
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="adminCode">Kode Admin</label>
-                    <input type="password" id="adminCode" placeholder="Masukkan kode..." required autocomplete="off">
-                </div>
-                <button type="submit" class="btn">
-                    <i data-lucide="key"></i> Masuk Sekarang
-                </button>
-            </form>
-
-            <div class="divider">
-                <span>Atau</span>
-            </div>
-
-            <!-- Tombol Beli Kode via WA Admin -->
-            <a href="https://wa.me/249114439118?text=BUY%20CODE%20ADMIN%20500P" target="_blank" class="btn btn-wa">
-                <i data-lucide="message-circle"></i> Beli Kode Admin (500P)
-            </a>
-        </div>
-
-        <!-- ================= HALAMAN DEPLOY VERCEL ================= -->
-        <div id="deployPage" class="card hidden">
+        <!-- ================= CARD UTAMA ================= -->
+        <div class="card">
             <div class="header-bar">
-                <div class="badge" style="margin:0; background: var(--bg-green);">Akses Diterima</div>
-                <button id="logoutBtn" style="background:none; border:none; cursor:pointer;" title="Keluar">
-                    <i data-lucide="log-out"></i>
+                <div class="badge" style="margin:0;">Akses Vercel Deployer</div>
+            </div>
+
+            <!-- INTRO VIDEO CONTAINER -->
+            <div class="video-container">
+                <video id="introVideo" autoplay loop muted playsinline>
+                    <source src="https://ypggmvkgnjeflbkxooot.supabase.co/storage/v1/object/public/media/1788418737151_9d3clniauji.mp4" type="video/mp4">
+                    Browser Anda tidak mendukung pemutar video.
+                </video>
+                <button type="button" class="video-sound-btn" id="toggleSoundBtn">
+                    <i data-lucide="volume-x" id="soundIcon" style="width: 14px; height: 14px;"></i> 
+                    <span id="soundText">Mute</span>
                 </button>
             </div>
 
@@ -283,6 +299,12 @@
             <div id="deployAlert" class="alert"></div>
 
             <form id="deployForm">
+                <!-- INPUT KODE ADMIN (Diisi pengguna) -->
+                <div class="form-group">
+                    <label for="adminCode">Kode Admin</label>
+                    <input type="password" id="adminCode" placeholder="Masukkan Kode Admin..." required autocomplete="off">
+                </div>
+
                 <div class="form-group">
                     <label for="projectName">Nama Subdomain / Project</label>
                     <input type="text" id="projectName" placeholder="contoh: web-kece-saya" required>
@@ -316,6 +338,15 @@
                 </button>
             </form>
 
+            <div class="divider">
+                <span>Belum punya kode?</span>
+            </div>
+
+            <!-- Tombol Beli Kode via WA Admin -->
+            <a href="https://wa.me/249114439118?text=BUY%20CODE%20ADMIN%20500P" target="_blank" class="btn btn-wa">
+                <i data-lucide="message-circle"></i> Beli Kode Admin (500P)
+            </a>
+
             <div id="statusBox" class="status-box hidden">
                 <div style="margin-bottom: 5px; text-transform: uppercase;">
                     <i data-lucide="info" style="width: 14px; height: 14px; vertical-align: middle;"></i> Status Output:
@@ -327,22 +358,10 @@
     </div>
 
     <script>
-        // --- KODE ADMIN UNTUK LOGIN ---
-        const SECRET_ADMIN_CODE = "FZGPT191"; 
-
-        // --- ELEMENTS ---
-        const loginPage = document.getElementById('loginPage');
-        const deployPage = document.getElementById('deployPage');
-        const loginForm = document.getElementById('loginForm');
-        const adminCodeInput = document.getElementById('adminCode');
-        const loginAlert = document.getElementById('loginAlert');
-        const loginAlertMsg = document.getElementById('loginAlertMsg');
-        
         const deployForm = document.getElementById('deployForm');
         const deployAlert = document.getElementById('deployAlert');
         const statusBox = document.getElementById('statusBox');
         const statusText = document.getElementById('statusText');
-        const logoutBtn = document.getElementById('logoutBtn');
         const btnDeploy = document.getElementById('btnDeploy');
 
         const sectionFile = document.getElementById('sectionFile');
@@ -350,38 +369,29 @@
         const btnTabFile = document.getElementById('btnTabFile');
         const btnTabText = document.getElementById('btnTabText');
 
+        // Video Audio Toggle Controls
+        const introVideo = document.getElementById('introVideo');
+        const toggleSoundBtn = document.getElementById('toggleSoundBtn');
+        const soundIcon = document.getElementById('soundIcon');
+        const soundText = document.getElementById('soundText');
+
         let activeTab = 'file';
 
         lucide.createIcons();
 
-        if (localStorage.getItem('isAdminAuth') === 'true') {
-            showDeployPage();
-        }
-
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (adminCodeInput.value.trim() === SECRET_ADMIN_CODE) {
-                localStorage.setItem('isAdminAuth', 'true');
-                loginAlert.style.display = 'none';
-                showDeployPage();
+        // --- MUTE / UNMUTE VIDEO CONTROL ---
+        toggleSoundBtn.addEventListener('click', () => {
+            if (introVideo.muted) {
+                introVideo.muted = false;
+                soundText.textContent = "Unmute";
+                soundIcon.setAttribute('data-lucide', 'volume-2');
             } else {
-                loginAlertMsg.textContent = "Kode Admin Salah!";
-                loginAlert.style.display = 'block';
-                adminCodeInput.value = '';
+                introVideo.muted = true;
+                soundText.textContent = "Mute";
+                soundIcon.setAttribute('data-lucide', 'volume-x');
             }
+            lucide.createIcons();
         });
-
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('isAdminAuth');
-            deployPage.classList.add('hidden');
-            loginPage.classList.remove('hidden');
-            adminCodeInput.value = '';
-        });
-
-        function showDeployPage() {
-            loginPage.classList.add('hidden');
-            deployPage.classList.remove('hidden');
-        }
 
         function switchTab(type) {
             activeTab = type;
@@ -398,10 +408,11 @@
             }
         }
 
-        // --- PROCESS DEPLOY VIA BACKEND SERVERLESS ---
+        // --- PROCESS DEPLOY ---
         deployForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const adminCode = document.getElementById('adminCode').value.trim();
             const projectName = document.getElementById('projectName').value.trim();
             let htmlContent = "";
 
@@ -422,17 +433,17 @@
 
             btnDeploy.disabled = true;
             btnDeploy.style.opacity = '0.7';
-            btnDeploy.innerHTML = `<i data-lucide="loader"></i> Memproses...`;
+            btnDeploy.innerHTML = `<i data-lucide="loader"></i> Memverifikasi & Memproses...`;
             lucide.createIcons();
 
             statusBox.classList.remove('hidden');
-            statusText.textContent = "Mengirim data ke server deployer...";
+            statusText.textContent = "Mengirim data dan mengecek kode admin ke server...";
 
             try {
                 const response = await fetch('/api/deploy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ projectName, htmlContent })
+                    body: JSON.stringify({ adminCode, projectName, htmlContent })
                 });
 
                 const data = await response.json();
