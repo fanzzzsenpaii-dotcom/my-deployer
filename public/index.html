@@ -104,6 +104,36 @@
             box-shadow: 1px 1px 0px #000;
         }
 
+        /* --- MUSIC PLAYER BAR --- */
+        .music-bar {
+            background: var(--bg-pink);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .music-btn {
+            background: var(--bg-yellow);
+            border: 2px solid #000;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px #000;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+        }
+
+        .music-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
         h1, h2 {
             text-transform: uppercase;
             margin-bottom: 15px;
@@ -329,6 +359,23 @@
                 </button>
             </div>
 
+            <!-- MUSIC PLAYER BAR DI HALAMAN DEPLOY -->
+            <div class="music-bar">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                    <i data-lucide="music" style="width: 16px; height: 16px;"></i>
+                    <span>Background Music</span>
+                </div>
+                <button type="button" class="music-btn" id="toggleMusicBtn">
+                    <i data-lucide="disc" id="musicIcon" style="width: 14px; height: 14px;"></i>
+                    <span id="musicText">Pause</span>
+                </button>
+            </div>
+
+            <!-- AUDIO ELEMENT UNTUK LAGU -->
+            <audio id="bgMusic" loop>
+                <source src="https://ypggmvkgnjeflbkxooot.supabase.co/storage/v1/object/public/media/1788575258391_xajf4.mp3" type="audio/mpeg">
+            </audio>
+
             <h2><i data-lucide="rocket"></i> Instant HTML Deployer</h2>
             <p>Deploy website HTML kamu secara publik dalam hitungan detik.</p>
 
@@ -400,11 +447,17 @@
         const btnTabFile = document.getElementById('btnTabFile');
         const btnTabText = document.getElementById('btnTabText');
 
-        // Video Audio Controls
+        // Video Audio Controls (Halaman Login)
         const introVideo = document.getElementById('introVideo');
         const toggleSoundBtn = document.getElementById('toggleSoundBtn');
         const soundIcon = document.getElementById('soundIcon');
         const soundText = document.getElementById('soundText');
+
+        // Music Controls (Halaman Deploy)
+        const bgMusic = document.getElementById('bgMusic');
+        const toggleMusicBtn = document.getElementById('toggleMusicBtn');
+        const musicIcon = document.getElementById('musicIcon');
+        const musicText = document.getElementById('musicText');
 
         let savedAdminCode = localStorage.getItem('savedAdminCode') || "";
         let activeTab = 'file';
@@ -430,6 +483,20 @@
             lucide.createIcons();
         });
 
+        // --- PLAY / PAUSE MUSIC CONTROL ---
+        toggleMusicBtn.addEventListener('click', () => {
+            if (bgMusic.paused) {
+                bgMusic.play();
+                musicText.textContent = "Pause";
+                musicIcon.setAttribute('data-lucide', 'disc');
+            } else {
+                bgMusic.pause();
+                musicText.textContent = "Play";
+                musicIcon.setAttribute('data-lucide', 'play');
+            }
+            lucide.createIcons();
+        });
+
         // --- SUBMIT LOGIN FORM ---
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -442,7 +509,6 @@
             btnLogin.innerHTML = `<i data-lucide="loader"></i> Memeriksa Kode...`;
             lucide.createIcons();
 
-            // Tes verifikasi kode ke backend
             try {
                 const res = await fetch('/api/deploy', {
                     method: 'POST',
@@ -452,19 +518,16 @@
 
                 const data = await res.json();
 
-                // Jika server merespon "Kode Admin Salah"
                 if (res.status === 401) {
                     loginAlertMsg.textContent = data.error || "Kode Admin Salah!";
                     loginAlert.style.display = 'block';
                 } else {
-                    // Kode Benar
                     savedAdminCode = inputCode;
                     localStorage.setItem('savedAdminCode', inputCode);
                     loginAlert.style.display = 'none';
                     showDeployPage();
                 }
             } catch (err) {
-                // Jika error lain, simpan kode dulu nanti dicek saat deploy
                 savedAdminCode = inputCode;
                 localStorage.setItem('savedAdminCode', inputCode);
                 showDeployPage();
@@ -479,14 +542,37 @@
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('savedAdminCode');
             savedAdminCode = "";
+
+            // Hentikan Lagu saat Logout & Putar Video lagi
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+
             deployPage.classList.add('hidden');
             loginPage.classList.remove('hidden');
             adminCodeInput.value = '';
+
+            introVideo.play();
         });
 
         function showDeployPage() {
+            // STOP VIDEO INTRO
+            introVideo.pause();
+            introVideo.currentTime = 0;
+
+            // PINDAH HALAMAN
             loginPage.classList.add('hidden');
             deployPage.classList.remove('hidden');
+
+            // PUTAR BACKGROUND MUSIC
+            bgMusic.play().then(() => {
+                musicText.textContent = "Pause";
+                musicIcon.setAttribute('data-lucide', 'disc');
+            }).catch(() => {
+                // Jika autoplay diblokir browser
+                musicText.textContent = "Play";
+                musicIcon.setAttribute('data-lucide', 'play');
+            });
+            lucide.createIcons();
         }
 
         function switchTab(type) {
@@ -556,7 +642,6 @@
                     `;
                 } else {
                     if (response.status === 401) {
-                        // Jika ternyata kodenya salah/kadaluarsa
                         localStorage.removeItem('savedAdminCode');
                         alert("Sesi login berakhir atau Kode Admin Salah!");
                         location.reload();
