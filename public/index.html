@@ -65,7 +65,7 @@
             margin-bottom: 15px;
         }
 
-        /* --- VIDEO INTRO STYLING --- */
+        /* --- VIDEO CONTAINER STYLING --- */
         .video-container {
             position: relative;
             width: 100%;
@@ -309,7 +309,7 @@
         <div id="loginPage" class="card">
             <div class="badge">Akses Terbatas</div>
 
-            <!-- INTRO VIDEO CONTAINER -->
+            <!-- INTRO VIDEO LOGIN -->
             <div class="video-container">
                 <video id="introVideo" autoplay loop muted playsinline>
                     <source src="https://ypggmvkgnjeflbkxooot.supabase.co/storage/v1/object/public/media/1788418737151_9d3clniauji.mp4" type="video/mp4">
@@ -357,6 +357,14 @@
                 <button id="logoutBtn" style="background:none; border:none; cursor:pointer;" title="Keluar">
                     <i data-lucide="log-out"></i>
                 </button>
+            </div>
+
+            <!-- VIDEO DEPLOY (TANPA SUARA / PERMANENTLY MUTED) -->
+            <div class="video-container">
+                <video id="deployVideo" autoplay loop muted playsinline>
+                    <source src="https://ypggmvkgnjeflbkxooot.supabase.co/storage/v1/object/public/media/1788575700691_bi1jd.mp4" type="video/mp4">
+                    Browser Anda tidak mendukung pemutar video.
+                </video>
             </div>
 
             <!-- MUSIC PLAYER BAR DI HALAMAN DEPLOY -->
@@ -453,6 +461,9 @@
         const soundIcon = document.getElementById('soundIcon');
         const soundText = document.getElementById('soundText');
 
+        // Video Deploy Page
+        const deployVideo = document.getElementById('deployVideo');
+
         // Music Controls (Halaman Deploy)
         const bgMusic = document.getElementById('bgMusic');
         const toggleMusicBtn = document.getElementById('toggleMusicBtn');
@@ -469,7 +480,7 @@
             showDeployPage();
         }
 
-        // --- MUTE / UNMUTE VIDEO CONTROL ---
+        // --- MUTE / UNMUTE VIDEO INTRO CONTROL ---
         toggleSoundBtn.addEventListener('click', () => {
             if (introVideo.muted) {
                 introVideo.muted = false;
@@ -543,19 +554,21 @@
             localStorage.removeItem('savedAdminCode');
             savedAdminCode = "";
 
-            // Hentikan Lagu saat Logout & Putar Video lagi
+            // Hentikan Musik & Video Deploy
             bgMusic.pause();
             bgMusic.currentTime = 0;
+            deployVideo.pause();
 
             deployPage.classList.add('hidden');
             loginPage.classList.remove('hidden');
             adminCodeInput.value = '';
 
+            // Putar kembali Video Login
             introVideo.play();
         });
 
         function showDeployPage() {
-            // STOP VIDEO INTRO
+            // STOP VIDEO INTRO LOGIN
             introVideo.pause();
             introVideo.currentTime = 0;
 
@@ -563,7 +576,10 @@
             loginPage.classList.add('hidden');
             deployPage.classList.remove('hidden');
 
-            // PUTAR BACKGROUND MUSIC
+            // PUTAR VIDEO DEPLOY (TANPA SUARA)
+            deployVideo.play();
+
+            // PUTAR BACKGROUND MUSIC (LAGU MP3)
             bgMusic.play().then(() => {
                 musicText.textContent = "Pause";
                 musicIcon.setAttribute('data-lucide', 'disc');
