@@ -78,7 +78,7 @@
 
         .video-container video {
             width: 100%;
-            max-height: 250px;
+            max-height: 220px;
             object-fit: cover;
             display: block;
         }
@@ -275,11 +275,9 @@
 
     <div class="container">
         
-        <!-- ================= CARD UTAMA ================= -->
-        <div class="card">
-            <div class="header-bar">
-                <div class="badge" style="margin:0;">Akses Vercel Deployer</div>
-            </div>
+        <!-- ================= 1. HALAMAN LOGIN ADMIN ================= -->
+        <div id="loginPage" class="card">
+            <div class="badge">Akses Terbatas</div>
 
             <!-- INTRO VIDEO CONTAINER -->
             <div class="video-container">
@@ -293,18 +291,50 @@
                 </button>
             </div>
 
+            <h1><i data-lucide="lock"></i> Login Admin</h1>
+            <p>Masukkan Kode Akses Admin untuk membuka Layanan Vercel Deployer.</p>
+
+            <div id="loginAlert" class="alert alert-error">
+                <i data-lucide="alert-triangle" style="width:16px; height:16px; vertical-align:middle;"></i>
+                <span id="loginAlertMsg">Kode admin salah!</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="adminCode">Kode Admin</label>
+                    <input type="password" id="adminCode" placeholder="Masukkan kode..." required autocomplete="off">
+                </div>
+                <button type="submit" class="btn" id="btnLogin">
+                    <i data-lucide="key"></i> Masuk Ke Deployer
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>Belum Punya Kode?</span>
+            </div>
+
+            <!-- Tombol Beli Kode via WA Admin -->
+            <a href="https://wa.me/249114439118?text=BUY%20CODE%20ADMIN%20500P" target="_blank" class="btn btn-wa">
+                <i data-lucide="message-circle"></i> Beli Kode Admin (500P)
+            </a>
+        </div>
+
+
+        <!-- ================= 2. HALAMAN DEPLOY VERCEL ================= -->
+        <div id="deployPage" class="card hidden">
+            <div class="header-bar">
+                <div class="badge" style="margin:0; background: var(--bg-green);">Akses Diterima</div>
+                <button id="logoutBtn" style="background:none; border:none; cursor:pointer;" title="Keluar">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+
             <h2><i data-lucide="rocket"></i> Instant HTML Deployer</h2>
             <p>Deploy website HTML kamu secara publik dalam hitungan detik.</p>
 
             <div id="deployAlert" class="alert"></div>
 
             <form id="deployForm">
-                <!-- INPUT KODE ADMIN (Diisi pengguna) -->
-                <div class="form-group">
-                    <label for="adminCode">Kode Admin</label>
-                    <input type="password" id="adminCode" placeholder="Masukkan Kode Admin..." required autocomplete="off">
-                </div>
-
                 <div class="form-group">
                     <label for="projectName">Nama Subdomain / Project</label>
                     <input type="text" id="projectName" placeholder="contoh: web-kece-saya" required>
@@ -338,15 +368,6 @@
                 </button>
             </form>
 
-            <div class="divider">
-                <span>Belum punya kode?</span>
-            </div>
-
-            <!-- Tombol Beli Kode via WA Admin -->
-            <a href="https://wa.me/249114439118?text=BUY%20CODE%20ADMIN%20500P" target="_blank" class="btn btn-wa">
-                <i data-lucide="message-circle"></i> Beli Kode Admin (500P)
-            </a>
-
             <div id="statusBox" class="status-box hidden">
                 <div style="margin-bottom: 5px; text-transform: uppercase;">
                     <i data-lucide="info" style="width: 14px; height: 14px; vertical-align: middle;"></i> Status Output:
@@ -358,10 +379,20 @@
     </div>
 
     <script>
+        // --- ELEMENTS ---
+        const loginPage = document.getElementById('loginPage');
+        const deployPage = document.getElementById('deployPage');
+        const loginForm = document.getElementById('loginForm');
+        const adminCodeInput = document.getElementById('adminCode');
+        const loginAlert = document.getElementById('loginAlert');
+        const loginAlertMsg = document.getElementById('loginAlertMsg');
+        const btnLogin = document.getElementById('btnLogin');
+        
         const deployForm = document.getElementById('deployForm');
         const deployAlert = document.getElementById('deployAlert');
         const statusBox = document.getElementById('statusBox');
         const statusText = document.getElementById('statusText');
+        const logoutBtn = document.getElementById('logoutBtn');
         const btnDeploy = document.getElementById('btnDeploy');
 
         const sectionFile = document.getElementById('sectionFile');
@@ -369,15 +400,21 @@
         const btnTabFile = document.getElementById('btnTabFile');
         const btnTabText = document.getElementById('btnTabText');
 
-        // Video Audio Toggle Controls
+        // Video Audio Controls
         const introVideo = document.getElementById('introVideo');
         const toggleSoundBtn = document.getElementById('toggleSoundBtn');
         const soundIcon = document.getElementById('soundIcon');
         const soundText = document.getElementById('soundText');
 
+        let savedAdminCode = localStorage.getItem('savedAdminCode') || "";
         let activeTab = 'file';
 
         lucide.createIcons();
+
+        // Cek jika user sudah pernah login sebelumnya
+        if (savedAdminCode) {
+            showDeployPage();
+        }
 
         // --- MUTE / UNMUTE VIDEO CONTROL ---
         toggleSoundBtn.addEventListener('click', () => {
@@ -392,6 +429,65 @@
             }
             lucide.createIcons();
         });
+
+        // --- SUBMIT LOGIN FORM ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inputCode = adminCodeInput.value.trim();
+
+            if (!inputCode) return;
+
+            btnLogin.disabled = true;
+            btnLogin.style.opacity = '0.7';
+            btnLogin.innerHTML = `<i data-lucide="loader"></i> Memeriksa Kode...`;
+            lucide.createIcons();
+
+            // Tes verifikasi kode ke backend
+            try {
+                const res = await fetch('/api/deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ adminCode: inputCode, checkOnly: true })
+                });
+
+                const data = await res.json();
+
+                // Jika server merespon "Kode Admin Salah"
+                if (res.status === 401) {
+                    loginAlertMsg.textContent = data.error || "Kode Admin Salah!";
+                    loginAlert.style.display = 'block';
+                } else {
+                    // Kode Benar
+                    savedAdminCode = inputCode;
+                    localStorage.setItem('savedAdminCode', inputCode);
+                    loginAlert.style.display = 'none';
+                    showDeployPage();
+                }
+            } catch (err) {
+                // Jika error lain, simpan kode dulu nanti dicek saat deploy
+                savedAdminCode = inputCode;
+                localStorage.setItem('savedAdminCode', inputCode);
+                showDeployPage();
+            } finally {
+                btnLogin.disabled = false;
+                btnLogin.style.opacity = '1';
+                btnLogin.innerHTML = `<i data-lucide="key"></i> Masuk Ke Deployer`;
+                lucide.createIcons();
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('savedAdminCode');
+            savedAdminCode = "";
+            deployPage.classList.add('hidden');
+            loginPage.classList.remove('hidden');
+            adminCodeInput.value = '';
+        });
+
+        function showDeployPage() {
+            loginPage.classList.add('hidden');
+            deployPage.classList.remove('hidden');
+        }
 
         function switchTab(type) {
             activeTab = type;
@@ -408,11 +504,10 @@
             }
         }
 
-        // --- PROCESS DEPLOY ---
+        // --- SUBMIT DEPLOY FORM ---
         deployForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const adminCode = document.getElementById('adminCode').value.trim();
             const projectName = document.getElementById('projectName').value.trim();
             let htmlContent = "";
 
@@ -433,17 +528,21 @@
 
             btnDeploy.disabled = true;
             btnDeploy.style.opacity = '0.7';
-            btnDeploy.innerHTML = `<i data-lucide="loader"></i> Memverifikasi & Memproses...`;
+            btnDeploy.innerHTML = `<i data-lucide="loader"></i> Memproses Deploy...`;
             lucide.createIcons();
 
             statusBox.classList.remove('hidden');
-            statusText.textContent = "Mengirim data dan mengecek kode admin ke server...";
+            statusText.textContent = "Mengirim data ke server Vercel...";
 
             try {
                 const response = await fetch('/api/deploy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ adminCode, projectName, htmlContent })
+                    body: JSON.stringify({ 
+                        adminCode: savedAdminCode, 
+                        projectName, 
+                        htmlContent 
+                    })
                 });
 
                 const data = await response.json();
@@ -456,6 +555,13 @@
                         <a href="https://${data.url}" target="_blank" style="color:#000; font-size:14px; text-decoration:underline;">https://${data.url}</a>
                     `;
                 } else {
+                    if (response.status === 401) {
+                        // Jika ternyata kodenya salah/kadaluarsa
+                        localStorage.removeItem('savedAdminCode');
+                        alert("Sesi login berakhir atau Kode Admin Salah!");
+                        location.reload();
+                        return;
+                    }
                     showAlert(deployAlert, "Gagal Deploy!", "error");
                     statusText.innerHTML = `<strong>ERROR:</strong> ${data.error || 'Terjadi kesalahan'}`;
                 }
