@@ -13,6 +13,7 @@
             --bg-cyan: #5ce1e6;
             --bg-green: #7ed957;
             --bg-orange: #ff914d;
+            --bg-whatsapp: #25d366;
             --card-bg: #ffffff;
             --dark: #000000;
             --border: 4px solid #000000;
@@ -138,12 +139,47 @@
             align-items: center;
             gap: 10px;
             transition: all 0.1s ease;
+            text-decoration: none;
+            color: var(--dark);
         }
 
         .btn:hover { background: var(--bg-green); }
         .btn:active {
             box-shadow: var(--shadow-active);
             transform: translate(3px, 3px);
+        }
+
+        /* Styling khusus tombol WhatsApp WA Admin */
+        .btn-wa {
+            background: var(--bg-whatsapp);
+            margin-top: 15px;
+        }
+        .btn-wa:hover {
+            background: #1eb855;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0 15px 0;
+            position: relative;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .divider::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #000;
+            z-index: 1;
+        }
+        .divider span {
+            background: var(--card-bg);
+            padding: 0 10px;
+            position: relative;
+            z-index: 2;
         }
 
         .alert {
@@ -221,6 +257,15 @@
                     <i data-lucide="key"></i> Masuk Sekarang
                 </button>
             </form>
+
+            <div class="divider">
+                <span>Atau</span>
+            </div>
+
+            <!-- Tombol Beli Kode via WA Admin -->
+            <a href="https://wa.me/249114439118?text=BUY%20CODE%20ADMIN%20500P" target="_blank" class="btn btn-wa">
+                <i data-lucide="message-circle"></i> Beli Kode Admin (500P)
+            </a>
         </div>
 
         <!-- ================= HALAMAN DEPLOY VERCEL ================= -->
@@ -384,7 +429,6 @@
             statusText.textContent = "Mengirim data ke server deployer...";
 
             try {
-                // Panggil Serverless API bawaan project ini (/api/deploy)
                 const response = await fetch('/api/deploy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
